@@ -3,7 +3,7 @@ package regex
 //TransLink 状态转换
 type TransLink struct {
 	EpsilonLink bool   //是否空连转换
-	Token       rune   //对应转换token
+	Token       *Token //对应转换token
 	EndState    *State //转换目标状态
 }
 
