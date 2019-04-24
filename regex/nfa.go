@@ -28,12 +28,10 @@ func (ns *NfaSet) Push(s *Nfa) {
 
 //Pop 弹出nfa
 func (ns *NfaSet) Pop() (*Nfa, bool) {
-	cnt := len(ns.set)
-	if cnt == 0 {
+	if len(ns.set) == 0 {
 		return nil, false
 	}
-	cnt--
-	nfa := ns.set[cnt]
-	ns.set = ns.set[:cnt]
+	nfa := ns.set[0]
+	ns.set = ns.set[1:]
 	return nfa, true
 }
