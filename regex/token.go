@@ -4,8 +4,8 @@ package regex
 type TokenType int
 
 const (
-	//INVALID 非法
-	INVALID TokenType = iota
+	//EOF 结束
+	EOF TokenType = iota
 	//PLUS +
 	PLUS
 	//STAR *
@@ -20,6 +20,11 @@ const (
 	LP
 	//RP )
 	RP
+)
+
+var (
+	//EOFTOKEN 结束tokey
+	EOFTOKEN = Token{Type: EOF}
 )
 
 //Token 标识
