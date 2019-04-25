@@ -1,7 +1,12 @@
 package regex
 
+var (
+	dfaID = 0
+)
+
 //Dfa dfa结构
 type Dfa struct {
+	ID            int
 	SS            *StateSet
 	DfaTransLinks []*DfaTransLink
 }
@@ -12,9 +17,16 @@ type DfaTransLink struct {
 	EndDfa *Dfa
 }
 
+//生成状态id
+func genDfaID() int {
+	id := dfaID
+	dfaID++
+	return id
+}
+
 //NewDfa 生成dfa
 func NewDfa(ss *StateSet) *Dfa {
-	return &Dfa{SS: ss, DfaTransLinks: make([]*DfaTransLink, 0)}
+	return &Dfa{SS: ss, ID: genDfaID(), DfaTransLinks: make([]*DfaTransLink, 0)}
 }
 
 //IsAccept 是否可接受状态
@@ -29,12 +41,17 @@ func (dfa *Dfa) Equal(other *Dfa) bool {
 
 //ExistsTransLink 是否已经存在了转换
 func (dfa *Dfa) ExistsTransLink(token rune) bool {
+	return dfa.FindTransLinkDfa(token) != nil
+}
+
+//AddTransLink 加入连接
+func (dfa *Dfa) FindTransLinkDfa(token rune) *Dfa {
 	for _, dtl := range dfa.DfaTransLinks {
 		if dtl.Token == token {
-			return true
+			return dtl.EndDfa
 		}
 	}
-	return false
+	return nil
 }
 
 //AddTransLink 加入连接
@@ -50,12 +67,16 @@ func (dfa *Dfa) AddTransLink(token rune, other *Dfa) bool {
 }
 
 //FindPathEqualDfa 查询树里面是否有已存在的dfa
-func (dfa *Dfa) FindPathEqualDfa(ss *StateSet) *Dfa {
+func (dfa *Dfa) FindPathEqualDfa(ss *StateSet, fmap map[*Dfa]int) *Dfa {
+	if _, have := fmap[dfa]; have {
+		return nil
+	}
+	fmap[dfa] = 1
 	if dfa.SS.Equal(ss) {
 		return dfa
 	}
 	for _, dtl := range dfa.DfaTransLinks {
-		find := dtl.EndDfa.FindPathEqualDfa(ss)
+		find := dtl.EndDfa.FindPathEqualDfa(ss, fmap)
 		if find != nil {
 			return find
 		}

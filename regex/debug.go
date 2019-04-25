@@ -42,9 +42,9 @@ func printDfa(dfa *Dfa, filtMap map[*Dfa]int) {
 		return
 	}
 	filtMap[dfa] = 1
-	fmt.Printf("State :%s Accept:%t \n", dfa.SS.ToString(), dfa.IsAccept())
+	fmt.Printf("Dfa:%d Set:%s Accept:%t \n", dfa.ID, dfa.SS.ToString(), dfa.IsAccept())
 	for _, link := range dfa.DfaTransLinks {
-		fmt.Printf("trans Token:%s State: %s\n", string(link.Token), link.EndDfa.SS.ToString())
+		fmt.Printf("trans Token:%s State: %d\n", string(link.Token), link.EndDfa.ID)
 		defer printDfa(link.EndDfa, filtMap)
 	}
 }

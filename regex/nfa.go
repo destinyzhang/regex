@@ -19,7 +19,6 @@ func NewNfaWithTrans(token *Token) *Nfa {
 }
 
 func trans2Dfa(cru *Dfa, root *Dfa) {
-	cru.SS.Print()
 	for _, r := range cru.SS.FindNoEpsilonTrans() {
 		if cru.ExistsTransLink(r) {
 			continue
@@ -28,7 +27,7 @@ func trans2Dfa(cru *Dfa, root *Dfa) {
 		if ftss == nil {
 			continue
 		}
-		fdfa := root.FindPathEqualDfa(ftss)
+		fdfa := root.FindPathEqualDfa(ftss, make(map[*Dfa]int))
 		if fdfa == nil {
 			fdfa = NewDfa(ftss)
 		}
