@@ -20,7 +20,7 @@ func printState(state *State, filtMap map[int]int) {
 		return
 	}
 	filtMap[state.ID] = 1
-	fmt.Printf("State :%d Accept:%t \n", state.ID, state.IsAccept)
+	fmt.Printf("%s", state.ToString())
 	for _, link := range state.TransLinks {
 		token := "nil"
 		if link.Token != nil {
@@ -42,9 +42,9 @@ func printDfa(dfa *Dfa, filtMap map[*Dfa]int) {
 		return
 	}
 	filtMap[dfa] = 1
-	fmt.Printf("Dfa:%d Set:%s Accept:%t \n", dfa.ID, dfa.SS.ToString(), dfa.IsAccept())
+	fmt.Printf("%s", dfa.ToString())
 	for _, link := range dfa.DfaTransLinks {
-		fmt.Printf("trans Token:%s State: %d\n", string(link.Token), link.EndDfa.ID)
+		fmt.Printf("%s", link.ToString())
 		defer printDfa(link.EndDfa, filtMap)
 	}
 }

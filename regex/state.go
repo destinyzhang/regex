@@ -22,9 +22,18 @@ type TransLink struct {
 	EndState *State //转换目标状态
 }
 
+//ToString 打印
+func (tl *TransLink) ToString() string {
+	str := "nil"
+	if tl.Token != nil {
+		str = tl.Token.ToString()
+	}
+	return fmt.Sprintf("trans Token:%s State: %d\n", str, tl.EndState.ID)
+}
+
 //EpsilonLink 是否空连接转换
-func (tlink *TransLink) EpsilonLink() bool {
-	return tlink.Token == nil
+func (tl *TransLink) EpsilonLink() bool {
+	return tl.Token == nil
 }
 
 //State 状态
@@ -70,6 +79,11 @@ func (state *State) FindEpsilonSet() *StateSet {
 	epsilonSet.Push(state)
 	findEpsilonSet(state, epsilonSet)
 	return epsilonSet
+}
+
+//ToString 打印
+func (state *State) ToString() string {
+	return fmt.Sprintf("State :%d Accept:%t \n", state.ID, state.IsAccept)
 }
 
 //StateSet 状态集合

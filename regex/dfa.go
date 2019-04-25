@@ -1,5 +1,9 @@
 package regex
 
+import (
+	"fmt"
+)
+
 var (
 	dfaID = 0
 )
@@ -15,6 +19,11 @@ type Dfa struct {
 type DfaTransLink struct {
 	Token  rune
 	EndDfa *Dfa
+}
+
+//ToString 打印
+func (dtl *DfaTransLink) ToString() string {
+	return fmt.Sprintf("trans Token:%s State: %d\n", string(dtl.Token), dtl.EndDfa.ID)
 }
 
 //生成状态id
@@ -44,7 +53,7 @@ func (dfa *Dfa) ExistsTransLink(token rune) bool {
 	return dfa.FindTransLinkDfa(token) != nil
 }
 
-//AddTransLink 加入连接
+//FindTransLinkDfa 查询已经存在的连接
 func (dfa *Dfa) FindTransLinkDfa(token rune) *Dfa {
 	for _, dtl := range dfa.DfaTransLinks {
 		if dtl.Token == token {
@@ -52,6 +61,11 @@ func (dfa *Dfa) FindTransLinkDfa(token rune) *Dfa {
 		}
 	}
 	return nil
+}
+
+//ToString 打印
+func (dfa *Dfa) ToString() string {
+	return fmt.Sprintf("Dfa:%d Set:%s Accept:%t \n", dfa.ID, dfa.SS.ToString(), dfa.IsAccept())
 }
 
 //AddTransLink 加入连接
