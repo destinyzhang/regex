@@ -23,14 +23,19 @@ const (
 )
 
 var (
-	//EOFTOKEN 结束tokey
-	EOFTOKEN = Token{Type: EOF}
+	//TokenDesc 数组
+	TokenDesc = [...]string{`eof`, `+`, `*`, `?`, `|`, `char`, `(`, `)`}
 )
 
 //Token 标识
 type Token struct {
 	Type  TokenType
 	Value rune
+}
+
+//ToString 转为string
+func (token *Token) ToString() string {
+	return string(token.Value)
 }
 
 //NewToken 生成新token

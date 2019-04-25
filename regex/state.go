@@ -1,5 +1,10 @@
 package regex
 
+import (
+	"fmt"
+	"strings"
+)
+
 var (
 	stateID = 0
 )
@@ -27,16 +32,14 @@ type State struct {
 	ID         int          //状态id
 	IsAccept   bool         //是否可接受状态
 	TransLinks []*TransLink //状态转换
-	epsilonSet *StateSet    //闭包集合
 }
 
 //NewState 生成状态
-func NewState() *State {
+func NewState(accept bool) *State {
 	return &State{
 		ID:         genStateID(),
-		IsAccept:   true,
+		IsAccept:   accept,
 		TransLinks: make([]*TransLink, 0),
-		epsilonSet: nil,
 	}
 }
 
@@ -62,13 +65,11 @@ func (state *State) AddTransLink(token *Token, endState *State) {
 }
 
 //FindEpsilonSet 返回闭包集合
-func (state *State) FindEpsilonSet(new bool) *StateSet {
-	//没有生成过
-	if state.epsilonSet == nil || new {
-		state.epsilonSet = NewStateSet()
-		findEpsilonSet(state, state.epsilonSet)
-	}
-	return state.epsilonSet
+func (state *State) FindEpsilonSet() *StateSet {
+	epsilonSet := NewStateSet()
+	epsilonSet.Push(state)
+	findEpsilonSet(state, epsilonSet)
+	return epsilonSet
 }
 
 //StateSet 状态集合
@@ -79,6 +80,11 @@ type StateSet struct {
 //NewStateSet 生成状态集合
 func NewStateSet() *StateSet {
 	return &StateSet{set: make([]*State, 0)}
+}
+
+//Count 状态数量
+func (ss *StateSet) Count() int {
+	return len(ss.set)
 }
 
 //Exists 是否存在状态
@@ -98,4 +104,100 @@ func (ss *StateSet) Push(s *State) bool {
 	}
 	ss.set = append(ss.set, s)
 	return true
+}
+
+//IsAccept 是否可接受状态合集
+func (ss *StateSet) IsAccept() bool {
+	for _, s := range ss.set {
+		if s.IsAccept {
+			return true
+		}
+	}
+	return false
+}
+
+//Megre 合并状态
+func (ss *StateSet) Megre(other *StateSet) *StateSet {
+	megre := NewStateSet()
+	megre.Megre(other)
+	megre.Megre(ss)
+	return megre
+}
+
+func (ss *StateSet) megre(other *StateSet) *StateSet {
+	if other != nil {
+		for _, s := range other.set {
+			ss.Push(s)
+		}
+	}
+	return ss
+}
+
+//Equal 是否相等
+func (ss *StateSet) Equal(other *StateSet) bool {
+	if len(ss.set) != len(other.set) {
+		return false
+	}
+	for _, s := range ss.set {
+		if !other.Exists(s) {
+			return false
+		}
+	}
+	return true
+}
+
+//ToString 打印
+func (ss *StateSet) ToString() string {
+	strSet := make([]string, 0, len(ss.set))
+	for _, s := range ss.set {
+		strSet = append(strSet, fmt.Sprintf("%d", s.ID))
+	}
+	return strings.Join(strSet, ",")
+}
+
+//Print 打印
+func (ss *StateSet) Print() {
+	fmt.Println(ss.ToString())
+}
+
+//FindNoEpsilonTrans 查询非空连转换
+func (ss *StateSet) FindNoEpsilonTrans() []rune {
+	runes := make([]rune, 0)
+	exist := func(r rune) bool {
+		for _, rr := range runes {
+			if rr == r {
+				return true
+			}
+		}
+		return false
+	}
+	for _, s := range ss.set {
+		for _, tl := range s.TransLinks {
+			if !tl.EpsilonLink() {
+				if !exist(tl.Token.Value) {
+					runes = append(runes, tl.Token.Value)
+				}
+			}
+		}
+	}
+	return runes
+}
+
+//FindTransStateSet 查询对应转换集合
+func (ss *StateSet) FindTransStateSet(r rune) *StateSet {
+	var ftss *StateSet
+	for _, s := range ss.set {
+		for _, tl := range s.TransLinks {
+			if !tl.EpsilonLink() && tl.Token.Value == r {
+				ftss = tl.EndState.FindEpsilonSet().megre(ftss)
+			}
+		}
+	}
+	return ftss
+}
+
+//ToState 转换成一个状态
+func (ss *StateSet) ToState() *State {
+	state := NewState(ss.IsAccept())
+	return state
 }

@@ -16,10 +16,15 @@ func (lex *Lex) Expression() string {
 	return string(lex.runes)
 }
 
+//Cursor 返回当前游标
+func (lex *Lex) Cursor() int {
+	return lex.cursor
+}
+
 //NextToken 返回下一个token
 func (lex *Lex) NextToken() *Token {
 	if lex.cursor >= len(lex.runes) {
-		return &EOFTOKEN
+		return &Token{Type: EOF}
 	}
 	r := lex.runes[lex.cursor]
 	lex.cursor++

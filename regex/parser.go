@@ -1,99 +1,123 @@
 package regex
 
+import "fmt"
+
 //Parser 解析类
 type Parser struct {
-	lex    *Lex
-	token  *Token
-	nfaSet *NfaSet
+	lex      *Lex
+	token    *Token
+	stackEnd []TokenType
+	end      TokenType
 }
 
 //NewParser 生成Parser
 func NewParser(lex *Lex) *Parser {
-	return &Parser{lex: lex, token: lex.NextToken(), nfaSet: NewNfaSet()}
+	return &Parser{lex: lex, token: lex.NextToken(), stackEnd: make([]TokenType, 0)}
 }
 
-//Parse 解析
-func (parser *Parser) Parse() *Nfa {
-	/*
-		expression -> expression(PLUS|START) | (expression) | (CHAR | QMASK)
-	*/
-	//表达式应以CHAR QMASK LP开头
-	for {
-		nfa := parser.baseToken()
-		if nfa == nil {
-			break
+/*
+Parse 解析 表达式应以CHAR QMASK LP开头
+	expression -> expression(PLUS|START) | (expression) | (CHAR | QMASK)
+*/
+func (parser *Parser) Parse() (result *Nfa) {
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Println(e)
 		}
-		//正常完成判断后面是否有运算符号
-		if parser.token.Type == PLUS {
-			parser.consumeToken()
-			nfa = transPlusNfa(nfa)
-		} else if parser.token.Type == STAR {
-			parser.consumeToken()
-			nfa = transStarNfa(nfa)
-		}
-		parser.nfaSet.Push(nfa)
+	}()
+	result = parser.expressionWithEnd(EOF)
+	return
+}
+
+func (parser *Parser) push(tt TokenType) {
+	parser.end = tt
+	parser.stackEnd = append(parser.stackEnd, tt)
+}
+
+func (parser *Parser) pop() {
+	cnt := len(parser.stackEnd) - 1
+	parser.stackEnd = parser.stackEnd[:cnt]
+	if cnt > 0 {
+		parser.end = parser.stackEnd[cnt-1]
 	}
-	result, _ := parser.nfaSet.Pop()
-	if result != nil {
-		for {
-			if nfa, suc := parser.nfaSet.Pop(); suc {
-				result = transAddNfa(result, nfa)
-			} else {
-				break
-			}
+
+}
+
+func (parser *Parser) panic(err string) {
+	panic(err)
+}
+
+func (parser *Parser) consumeToken(tt TokenType) {
+	if parser.token.Type != tt {
+		parser.panic(fmt.Sprintf("invalid token: %s in: [%s] index: [%d] need: %s",
+			parser.token.ToString(), parser.lex.Expression(), parser.lex.Cursor(), TokenDesc[tt]))
+	}
+	parser.token = parser.lex.NextToken()
+}
+
+func (parser *Parser) expressionWithEnd(tt TokenType) *Nfa {
+	parser.push(tt)
+	defer parser.pop()
+	return parser.expression()
+}
+
+func (parser *Parser) expression() *Nfa {
+	var result *Nfa
+	for {
+		result = parser.addExpression(result)
+		if parser.token.Type == parser.end {
+			break
 		}
 	}
 	return result
 }
 
-func transAddNfa(nfa1 *Nfa, nfa2 *Nfa) *Nfa {
-	nfa1.End.IsAccept = false
-	nfa1.End.AddTransEpsilonLink(nfa2.Init)
-	return nfa1
+func (parser *Parser) addExpression(head *Nfa) *Nfa {
+	nfa := parser.repetExpression()
+	if head != nil {
+		nfa = transAddNfa(head, nfa)
+	}
+	return parser.orExpression(nfa)
 }
 
-func transOrNfa(nfa1 *Nfa, nfa2 *Nfa) *Nfa {
-	orNfa := NewNfa()
-	orNfa.Init.IsAccept = false
-	orNfa.Init.AddTransEpsilonLink(nfa1.Init)
-	orNfa.Init.AddTransEpsilonLink(nfa2.Init)
-
-	nfa1.End.IsAccept = false
-	nfa2.End.IsAccept = false
-
-	nfa1.End.AddTransEpsilonLink(orNfa.End)
-	nfa2.End.AddTransEpsilonLink(orNfa.End)
-	return orNfa
-}
-
-func transStarNfa(nfa *Nfa) *Nfa {
-	//a* == 空|a+
-	nfa = transPlusNfa(nfa)
-	//空
-	eNfa := NewNfa()
-	eNfa.Init.IsAccept = false
-	eNfa.Init.AddTransEpsilonLink(eNfa.End)
-	return transOrNfa(eNfa, nfa)
-}
-
-func transPlusNfa(nfa *Nfa) *Nfa {
-	nfa.End.AddTransEpsilonLink(nfa.Init)
+func (parser *Parser) orExpression(nfa *Nfa) *Nfa {
+	if parser.token.Type == OR {
+		parser.consumeToken(OR)
+		nfa = transOrNfa(nfa, parser.expression())
+	}
 	return nfa
 }
 
-func (parser *Parser) consumeToken() {
-	parser.token = parser.lex.NextToken()
+func (parser *Parser) repetExpression() *Nfa {
+	nfa := parser.baseExpression()
+	if parser.token.Type == PLUS {
+		parser.consumeToken(PLUS)
+		nfa = transPlusNfa(nfa)
+	} else if parser.token.Type == STAR {
+		parser.consumeToken(STAR)
+		nfa = transStarNfa(nfa)
+	}
+	return nfa
 }
 
-//解析最基本的token
-func (parser *Parser) baseToken() *Nfa {
-	if parser.token.Type == CHAR || parser.token.Type == QMASK {
-		nfa := NewNfa()
-		nfa.Init.IsAccept = false
-		nfa.End.IsAccept = true
-		nfa.Init.AddTransLink(parser.token, nfa.End)
-		parser.consumeToken()
+func (parser *Parser) baseExpression() *Nfa {
+	if parser.token.Type == CHAR {
+		nfa := NewNfaWithTrans(parser.token)
+		parser.consumeToken(CHAR)
 		return nfa
 	}
+	if parser.token.Type == QMASK {
+		nfa := NewNfaWithTrans(parser.token)
+		parser.consumeToken(QMASK)
+		return nfa
+	}
+	if parser.token.Type == LP {
+		parser.consumeToken(LP)
+		nfa := parser.expressionWithEnd(RP)
+		parser.consumeToken(RP)
+		return nfa
+	}
+	parser.panic(fmt.Sprintf("invalid token: %s in: [%s] index: [%d] need: %s or %s or %s",
+		parser.token.ToString(), parser.lex.Expression(), parser.lex.Cursor(), TokenDesc[LP], TokenDesc[CHAR], TokenDesc[QMASK]))
 	return nil
 }
