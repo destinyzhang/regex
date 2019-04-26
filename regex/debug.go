@@ -22,11 +22,7 @@ func printState(state *State, filtMap map[int]int) {
 	filtMap[state.ID] = 1
 	fmt.Printf("%s", state.ToString())
 	for _, link := range state.TransLinks {
-		token := "nil"
-		if link.Token != nil {
-			token = link.Token.ToString()
-		}
-		fmt.Printf("trans Token:%s State: %d\n", token, link.EndState.ID)
+		fmt.Printf("%s", link.ToString())
 		defer printState(link.EndState, filtMap)
 	}
 }
