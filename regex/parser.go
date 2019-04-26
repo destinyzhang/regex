@@ -16,8 +16,8 @@ func NewParser(lex *Lex) *Parser {
 }
 
 /*
-Parse 解析 表达式应以CHAR QMASK LP开头
-	expression -> expression(PLUS|START) | (expression) | (CHAR | QMASK)
+Parse 解析 表达式应以CHAR POINT LP开头
+	expression -> expression(PLUS|START) | (expression) | (CHAR | POINT)
 */
 func (parser *Parser) Parse() (result *Nfa) {
 	defer func() {
@@ -106,9 +106,9 @@ func (parser *Parser) baseExpression() *Nfa {
 		parser.consumeToken(CHAR)
 		return nfa
 	}
-	if parser.token.Type == QMASK {
+	if parser.token.Type == POINT {
 		nfa := NewNfaWithTrans(parser.token)
-		parser.consumeToken(QMASK)
+		parser.consumeToken(POINT)
 		return nfa
 	}
 	if parser.token.Type == LP {
@@ -118,6 +118,6 @@ func (parser *Parser) baseExpression() *Nfa {
 		return nfa
 	}
 	parser.panic(fmt.Sprintf("invalid token: %s in: [%s] index: [%d] need: %s or %s or %s",
-		parser.token.ToString(), parser.lex.Expression(), parser.lex.Cursor(), TokenDesc[LP], TokenDesc[CHAR], TokenDesc[QMASK]))
+		parser.token.ToString(), parser.lex.Expression(), parser.lex.Cursor(), TokenDesc[LP], TokenDesc[CHAR], TokenDesc[POINT]))
 	return nil
 }

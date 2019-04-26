@@ -41,7 +41,7 @@ func (regex *Regex) Match(str string) bool {
 	}
 	dfa := regex.dfa
 	for _, r := range []rune(str) {
-		dfa = dfa.FindTransLinkDfa(r)
+		dfa = dfa.MatchTransLinkDfa(r)
 		if dfa == nil {
 			return false
 		}

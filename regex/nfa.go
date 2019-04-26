@@ -27,7 +27,7 @@ func trans2Dfa(cru *Dfa, root *Dfa) {
 		if ftss == nil {
 			continue
 		}
-		fdfa := root.FindPathEqualDfa(ftss, make(map[*Dfa]int))
+		fdfa := root.FindPathEqualDfa(ftss, make(map[int]int))
 		if fdfa == nil {
 			fdfa = NewDfa(ftss)
 		}

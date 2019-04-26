@@ -41,8 +41,8 @@ func main() {
 	rd := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println("输入匹配字符串")
-		match, _ := rd.ReadString('\n')
-		match = match[:len(match)-1]
-		fmt.Printf("%s=>%t \n", append([]byte(match), 0), regex.Match(match))
+		bytes, _, _ := rd.ReadLine()
+		match := string(bytes)
+		fmt.Printf("%s=>%t \n", match, regex.Match(match))
 	}
 }

@@ -10,8 +10,8 @@ const (
 	PLUS
 	//STAR *
 	STAR
-	//QMASK ?
-	QMASK
+	//POINT .
+	POINT
 	//OR |
 	OR
 	//CHAR 单个字
@@ -24,7 +24,7 @@ const (
 
 var (
 	//TokenDesc 数组
-	TokenDesc = [...]string{`eof`, `+`, `*`, `?`, `|`, `char`, `(`, `)`}
+	TokenDesc = [...]string{`eof`, `+`, `*`, `.`, `|`, `char`, `(`, `)`}
 )
 
 //Token 标识
@@ -46,8 +46,8 @@ func NewToken(r rune) *Token {
 		tt = PLUS
 	case '*':
 		tt = STAR
-	case '?':
-		tt = QMASK
+	case '.':
+		tt = POINT
 	case '|':
 		tt = OR
 	case '(':
