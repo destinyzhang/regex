@@ -169,11 +169,6 @@ func (ss *StateSet) ToString() string {
 	return strings.Join(strSet, ",")
 }
 
-//Print 打印
-func (ss *StateSet) Print() {
-	fmt.Println(ss.ToString())
-}
-
 //FindNoEpsilonTrans 查询非空连转换
 func (ss *StateSet) FindNoEpsilonTrans() []rune {
 	runes := make([]rune, 0)
@@ -197,8 +192,8 @@ func (ss *StateSet) FindNoEpsilonTrans() []rune {
 	return runes
 }
 
-//FindTransStateSet 查询对应转换集合
-func (ss *StateSet) FindTransStateSet(r rune) *StateSet {
+//FindTransEpsilonSet 查询对应转换集合
+func (ss *StateSet) FindTransEpsilonSet(r rune) *StateSet {
 	var ftss *StateSet
 	for _, s := range ss.set {
 		for _, tl := range s.TransLinks {
@@ -208,10 +203,4 @@ func (ss *StateSet) FindTransStateSet(r rune) *StateSet {
 		}
 	}
 	return ftss
-}
-
-//ToState 转换成一个状态
-func (ss *StateSet) ToState() *State {
-	state := NewState(ss.IsAccept())
-	return state
 }

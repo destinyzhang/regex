@@ -23,7 +23,7 @@ func trans2Dfa(cru *Dfa, root *Dfa) {
 		if cru.ExistsTransLink(r) {
 			continue
 		}
-		ftss := cru.SS.FindTransStateSet(r)
+		ftss := cru.SS.FindTransEpsilonSet(r)
 		if ftss == nil {
 			continue
 		}
